@@ -364,7 +364,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     }, [supabase, localStream, room.id]);
 
     return (
-        <div className="w-full max-w-6xl h-full p-8 bg-n800 rounded-2xl shadow-xl flex flex-col gap-4 font-inter">
+        <div className="w-full max-w-6xl h-full p-8 bg-n800 rounded-2xl flex flex-col gap-4">
             {/* All the remote audio streams are rendered here, but they are hidden. */}
             <div className="hidden">
                 {remoteStreams.map((stream, index) => (

@@ -140,7 +140,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
     }, [supabase]);
 
     return (
-        <div className="w-full max-w-6xl p-8 bg-n800 rounded-2xl shadow-xl flex flex-col md:flex-row gap-8">
+        <div className="w-full max-w-6xl max-h-full p-8 bg-n800 rounded-2xl shadow-xl flex flex-col md:flex-row gap-8">
             {/* Left Panel: Room Finder */}
             <div className="w-full md:w-2/3 p-4 bg-n700 rounded-xl shadow-inner flex flex-col gap-4">
                 <h2 className="text-2xl font-bold text-n100">Room Finder</h2>

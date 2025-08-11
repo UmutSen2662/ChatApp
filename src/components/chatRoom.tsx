@@ -230,6 +230,27 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
         }
     };
 
+    // New function to handle leaving a room and cleaning up if empty
+    const handleLeaveRoomAndCleanup = async () => {
+        // Check how many people are in the room before we leave
+        const presenceState = supabase.channel(`room_${room.id}_presence`).presenceState();
+        const userCount = Object.keys(presenceState).length;
+
+        // If we are the last one in the room, delete the room from the database
+        if (userCount === 1) {
+            try {
+                const { error } = await supabase.from("rooms").delete().eq("id", room.id);
+                if (error) throw error;
+                console.log(`Room ${room.name} deleted successfully.`);
+            } catch (e: any) {
+                console.error("Error deleting empty room:", e.message);
+            }
+        }
+
+        // Always call the original onLeaveRoom prop
+        onLeaveRoom();
+    };
+
     // Function to end the voice call and clean up resources
     const endCall = () => {
         // Stop all local media tracks (e.g., the microphone)
@@ -409,7 +430,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
             <div className="flex justify-between items-center pb-4 border-b border-n700">
                 <h2 className="text-3xl font-bold text-n100">Room: {room.name}</h2>
                 <button
-                    onClick={onLeaveRoom}
+                    onClick={handleLeaveRoomAndCleanup}
                     className="text-white font-bold text-2xl py-2 px-4 rounded-md hover:bg-red-700 transition-all duration-200"
                 >
                     X

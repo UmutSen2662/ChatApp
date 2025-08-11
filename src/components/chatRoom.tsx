@@ -31,7 +31,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     // New states for mute and silence functionality
     const [isMuted, setIsMuted] = useState(false);
     const [isSilenced, setIsSilenced] = useState(false);
-    const peerConnections = useRef<any>({});
+    const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
     const localUserId = useRef(localStorage.getItem("userId"));
 
     // --- Function to fetch initial messages and set up real-time subscription
@@ -274,7 +274,10 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
 
     // WebRTC signaling effect
     useEffect(() => {
-        if (!supabase) return;
+        // Only start listening for signals if a call is in progress
+        if (!supabase || !isCalling) {
+            return;
+        }
 
         const signalSubscription = supabase
             .channel(`room_${room.id}_signals`)
@@ -361,7 +364,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
         return () => {
             signalSubscription.unsubscribe();
         };
-    }, [supabase, localStream, room.id]);
+    }, [supabase, localStream, room.id, isCalling]); // Add isCalling to dependencies
 
     return (
         <div className="w-full max-w-6xl h-full p-8 bg-n800 rounded-2xl flex flex-col gap-4">

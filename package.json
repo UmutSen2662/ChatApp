@@ -1,9 +1,8 @@
 {
-    "name": "chatapp",
+    "name": "chat-app",
     "private": true,
     "version": "0.0.0",
     "type": "module",
-    "homepage": "https://umutsen2662.github.io/ChatApp/",
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",

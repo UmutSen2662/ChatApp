@@ -32,6 +32,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isSilenced, setIsSilenced] = useState(false);
     const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
+    const candidatesQueue = useRef<{ [key: string]: RTCIceCandidate[] }>({}); // New ref to queue ICE candidates
     const localUserId = useRef(localStorage.getItem("userId"));
 
     // --- Function to fetch initial messages and set up real-time subscription
@@ -331,8 +332,26 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                         };
                     }
 
+                    // Helper function to process queued ICE candidates
+                    const processCandidatesQueue = async (pc: RTCPeerConnection, senderId: string) => {
+                        const candidates = candidatesQueue.current[senderId];
+                        if (candidates && candidates.length > 0) {
+                            for (const candidate of candidates) {
+                                try {
+                                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                                } catch (e) {
+                                    console.error("Error adding queued ICE candidate:", e);
+                                }
+                            }
+                            candidatesQueue.current[senderId] = []; // Clear the queue
+                        }
+                    };
+
                     if (signal.type === "offer") {
                         await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.data));
+                        // After setting the remote description, process any queued candidates
+                        processCandidatesQueue(peerConnection, signal.sender_id);
+
                         const answer = await peerConnection.createAnswer();
                         await peerConnection.setLocalDescription(answer);
 
@@ -350,11 +369,22 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                             });
                     } else if (signal.type === "answer") {
                         await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.data));
+                        // After setting the remote description, process any queued candidates
+                        processCandidatesQueue(peerConnection, signal.sender_id);
                     } else if (signal.type === "ice-candidate") {
-                        try {
-                            await peerConnection.addIceCandidate(new RTCIceCandidate(signal.data));
-                        } catch (e) {
-                            console.error("Error adding ICE candidate:", e);
+                        if (peerConnection.remoteDescription) {
+                            // Remote description is set, add the candidate immediately
+                            try {
+                                await peerConnection.addIceCandidate(new RTCIceCandidate(signal.data));
+                            } catch (e) {
+                                console.error("Error adding ICE candidate:", e);
+                            }
+                        } else {
+                            // Remote description is not yet set, queue the candidate
+                            if (!candidatesQueue.current[signal.sender_id]) {
+                                candidatesQueue.current[signal.sender_id] = [];
+                            }
+                            candidatesQueue.current[signal.sender_id].push(signal.data);
                         }
                     }
                 }

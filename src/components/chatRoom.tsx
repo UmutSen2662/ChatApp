@@ -120,11 +120,14 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     useEffect(() => {
         if (!supabase) return;
 
-        // Use a new Supabase channel for presence
-        const presenceChannel = supabase.channel(`room_${room.id}_presence`, {
+        // FIX: The channel name is now consistent with the Edge Function's cleanup job.
+        // The cleanup function looks for presence on a channel named 'presence-tracker'.
+        const presenceChannel = supabase.channel("presence-tracker", {
             config: {
                 presence: {
-                    key: localUserId.current,
+                    // We need to track the user AND the room they are in, so the cleanup function can
+                    // accurately determine which rooms are active.
+                    key: room.id,
                 },
             },
         });
@@ -132,19 +135,16 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
         // Event listener for presence state changes
         presenceChannel.on("presence", { event: "sync" }, () => {
             const presenceState = presenceChannel.presenceState();
-            const currentParticipants = Object.keys(presenceState)
-                .map((key) => {
-                    if (key !== localUserId.current) {
-                        return {
-                            id: key,
-                            user_name: presenceState[key][0].user_name,
-                            user_color: presenceState[key][0].user_color,
-                        };
+            // The presence state is now organized by room IDs
+            const currentParticipants = presenceState[room.id]
+                ?.map((p: any) => {
+                    if (p.user_id !== localUserId.current) {
+                        return { id: p.user_id, user_name: p.user_name, user_color: p.user_color };
                     }
                     return null;
                 })
                 .filter(Boolean);
-            setParticipants(currentParticipants);
+            setParticipants(currentParticipants || []);
             console.log("Participants in room:", currentParticipants);
         });
 

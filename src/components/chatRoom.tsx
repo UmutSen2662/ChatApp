@@ -409,143 +409,145 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     }, [supabase, localStream, room.id, isCalling]); // Add isCalling to dependencies
 
     return (
-        <div className="w-full max-w-6xl h-full p-8 bg-n800 rounded-2xl flex flex-col gap-4">
-            {/* All the remote audio streams are rendered here, but they are hidden. */}
-            <div className="hidden">
-                {remoteStreams.map((stream, index) => (
-                    <RemoteAudio key={index} stream={stream} isSilenced={isSilenced} />
-                ))}
-            </div>
-
-            {/* --- Chat Header --- */}
-            <div className="flex justify-between items-center pb-4 border-b border-n700">
-                <h2 className="text-3xl font-bold text-n100">Room: {room.name}</h2>
-                <button
-                    onClick={handleLeaveRoom}
-                    className="text-white font-bold text-2xl py-2 px-4 rounded-md hover:bg-red-700 transition-all duration-200"
-                >
-                    X
-                </button>
-            </div>
-
-            {/* --- Active Participants and WebRTC Controls --- */}
-            <div className="flex justify-between pb-4">
-                <div className="flex flex-col gap-2">
-                    <h3 className="text-xl font-semibold text-n100">Active Participants</h3>
-                    {participants.length > 0 ? (
-                        <ul className="flex flex-wrap gap-2 text-n300">
-                            <li className="bg-n700 px-3 py-1 rounded-full text-sm">
-                                <span style={{ color: user.color }}>{user.name} (You)</span>
-                            </li>
-                            {participants.map((p) => (
-                                <li key={p.id} className="bg-n700 px-3 py-1 rounded-full text-sm">
-                                    <span style={{ color: p.user_color }}>{p.user_name}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-n500">No other users in this room.</p>
-                    )}
+        <div className="w-full h-[100dvh] bg-n900 text-n100 p-4 flex items-center justify-center font-inter">
+            <div className="w-full max-w-6xl h-full p-8 bg-n800 rounded-2xl flex flex-col gap-4">
+                {/* All the remote audio streams are rendered here, but they are hidden. */}
+                <div className="hidden">
+                    {remoteStreams.map((stream, index) => (
+                        <RemoteAudio key={index} stream={stream} isSilenced={isSilenced} />
+                    ))}
                 </div>
-                <div className="flex gap-2 justify-between items-center">
-                    {isCalling && (
-                        <>
-                            <button
-                                onClick={toggleMute}
-                                className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
-                                    isMuted
-                                        ? "bg-red-600 hover:bg-red-700 text-white"
-                                        : "bg-n600 hover:bg-n500 text-n100"
-                                }`}
-                            >
-                                {isMuted ? "Unmute" : "Mute"}
-                            </button>
-                            <button
-                                onClick={toggleSilence}
-                                className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
-                                    isSilenced
-                                        ? "bg-red-600 hover:bg-red-700 text-white"
-                                        : "bg-n600 hover:bg-n500 text-n100"
-                                }`}
-                            >
-                                {isSilenced ? "Unsilence" : "Silence"}
-                            </button>
-                        </>
-                    )}
+
+                {/* --- Chat Header --- */}
+                <div className="flex justify-between items-center pb-4 border-b border-n700">
+                    <h2 className="text-3xl font-bold text-n100">Room: {room.name}</h2>
                     <button
-                        onClick={isCalling ? endCall : startCall}
-                        className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
-                            isCalling
-                                ? "bg-red-600 hover:bg-red-700 text-white"
-                                : "bg-green-600 hover:bg-green-700 text-white"
-                        }`}
+                        onClick={handleLeaveRoom}
+                        className="text-white font-bold text-2xl py-2 px-4 rounded-md hover:bg-red-700 transition-all duration-200"
                     >
-                        {isCalling ? "Disconnect" : "Start Voice Chat"}
+                        X
                     </button>
                 </div>
-            </div>
 
-            {/* --- Message Container --- */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto pr-4 flex flex-col">
-                {messages.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center text-n300 text-lg">
-                        <p>No messages yet. Say hello!</p>
+                {/* --- Active Participants and WebRTC Controls --- */}
+                <div className="flex justify-between pb-4">
+                    <div className="flex flex-col gap-2">
+                        <h3 className="text-xl font-semibold text-n100">Active Participants</h3>
+                        {participants.length > 0 ? (
+                            <ul className="flex flex-wrap gap-2 text-n300">
+                                <li className="bg-n700 px-3 py-1 rounded-full text-sm">
+                                    <span style={{ color: user.color }}>{user.name} (You)</span>
+                                </li>
+                                {participants.map((p) => (
+                                    <li key={p.id} className="bg-n700 px-3 py-1 rounded-full text-sm">
+                                        <span style={{ color: p.user_color }}>{p.user_name}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-n500">No other users in this room.</p>
+                        )}
                     </div>
-                ) : (
-                    messages.map((message, index) => {
-                        const previousMessage = messages[index - 1];
-                        const showName = !previousMessage || previousMessage.user_id !== message.user_id;
+                    <div className="flex gap-2 justify-between items-center">
+                        {isCalling && (
+                            <>
+                                <button
+                                    onClick={toggleMute}
+                                    className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
+                                        isMuted
+                                            ? "bg-red-600 hover:bg-red-700 text-white"
+                                            : "bg-n600 hover:bg-n500 text-n100"
+                                    }`}
+                                >
+                                    {isMuted ? "Unmute" : "Mute"}
+                                </button>
+                                <button
+                                    onClick={toggleSilence}
+                                    className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
+                                        isSilenced
+                                            ? "bg-red-600 hover:bg-red-700 text-white"
+                                            : "bg-n600 hover:bg-n500 text-n100"
+                                    }`}
+                                >
+                                    {isSilenced ? "Unsilence" : "Silence"}
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={isCalling ? endCall : startCall}
+                            className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
+                                isCalling
+                                    ? "bg-red-600 hover:bg-red-700 text-white"
+                                    : "bg-green-600 hover:bg-green-700 text-white"
+                            }`}
+                        >
+                            {isCalling ? "Disconnect" : "Start Voice Chat"}
+                        </button>
+                    </div>
+                </div>
 
-                        return (
-                            <div
-                                key={message.id}
-                                className="flex flex-col max-w-[80%]"
-                                style={{ marginLeft: message.user_id === localUserId.current ? "auto" : "0" }}
-                            >
-                                {showName && (
-                                    <span
-                                        style={{
-                                            color:
-                                                participants.find((p) => p.id === message.user_id)?.user_color ||
-                                                localStorage.getItem("userColor"),
-                                        }}
-                                        className="font-semibold mt-4"
-                                    >
-                                        {message.user_name}
-                                    </span>
-                                )}
-                                <div className="bg-n700 flex gap-2 items-center rounded-lg p-3 mt-2 w-fit">
-                                    <p className="text-n100">{message.content}</p>
-                                    <span className="text-n400 text-xs h-fit text-nowrap">
-                                        {new Date(message.created_at).toLocaleTimeString("en-GB", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </span>
+                {/* --- Message Container --- */}
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto pr-4 flex flex-col">
+                    {messages.length === 0 ? (
+                        <div className="flex-1 flex items-center justify-center text-n300 text-lg">
+                            <p>No messages yet. Say hello!</p>
+                        </div>
+                    ) : (
+                        messages.map((message, index) => {
+                            const previousMessage = messages[index - 1];
+                            const showName = !previousMessage || previousMessage.user_id !== message.user_id;
+
+                            return (
+                                <div
+                                    key={message.id}
+                                    className="flex flex-col max-w-[80%]"
+                                    style={{ marginLeft: message.user_id === localUserId.current ? "auto" : "0" }}
+                                >
+                                    {showName && (
+                                        <span
+                                            style={{
+                                                color:
+                                                    participants.find((p) => p.id === message.user_id)?.user_color ||
+                                                    localStorage.getItem("userColor"),
+                                            }}
+                                            className="font-semibold mt-4"
+                                        >
+                                            {message.user_name}
+                                        </span>
+                                    )}
+                                    <div className="bg-n700 flex gap-2 items-center rounded-lg p-3 mt-2 w-fit">
+                                        <p className="text-n100">{message.content}</p>
+                                        <span className="text-n400 text-xs h-fit text-nowrap">
+                                            {new Date(message.created_at).toLocaleTimeString("en-GB", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })
-                )}
-            </div>
+                            );
+                        })
+                    )}
+                </div>
 
-            {/* --- Message Input Form --- */}
-            <form onSubmit={handleSendMessage} className="flex gap-4 pt-4 border-t border-n700">
-                <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-                <button
-                    type="submit"
-                    disabled={isSending}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 disabled:bg-n500 disabled:pointer-events-none"
-                >
-                    {isSending ? "Sending..." : "Send"}
-                </button>
-            </form>
+                {/* --- Message Input Form --- */}
+                <form onSubmit={handleSendMessage} className="flex gap-4 pt-4 border-t border-n700">
+                    <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type a message..."
+                        className="flex-1 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                    <button
+                        type="submit"
+                        disabled={isSending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 disabled:bg-n500 disabled:pointer-events-none"
+                    >
+                        {isSending ? "Sending..." : "Send"}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

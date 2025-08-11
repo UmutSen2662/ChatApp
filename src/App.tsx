@@ -53,11 +53,7 @@ const App = () => {
         return null;
     };
 
-    return (
-        <div className="w-full h-full bg-n900 text-n100 p-4 flex items-center justify-center font-inter">
-            {renderView()}
-        </div>
-    );
+    return renderView();
 };
 
 export default App;

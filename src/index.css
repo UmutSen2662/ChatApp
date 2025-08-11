@@ -19,7 +19,7 @@
 
     color-scheme: light dark;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+    background-color: var(--color-n900);
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -28,7 +28,10 @@
 }
 
 #root {
-    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
 }
 
 a {

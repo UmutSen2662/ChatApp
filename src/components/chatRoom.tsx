@@ -169,7 +169,14 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     // Function to initialize WebRTC call
     const startCall = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    noiseSuppression: true,
+                    echoCancellation: true,
+                },
+                video: false,
+            });
+
             setLocalStream(stream);
             setIsCalling(true); // Set calling state to true
 

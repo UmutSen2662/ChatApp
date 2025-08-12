@@ -178,9 +178,14 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
             setLocalStream(stream);
             setIsCalling(true); // Set calling state to true
 
-            // Fetch a list of active participants from our new presence channel
-            const presenceState = supabase.channel(`room_${room.id}_presence`).presenceState();
-            const usersInRoom = Object.keys(presenceState).map((key) => ({ user_id: key }));
+            // Get the current presence state from the correct, single presence channel
+            const presenceState = supabase.channel("presence-tracker").presenceState();
+            // Filter the participants to only include those in the current room
+            const usersInRoom = presenceState[room.id]
+                ? presenceState[room.id]
+                      .map((p: any) => ({ user_id: p.user_id }))
+                      .filter((p: any) => p.user_id !== localUserId.current)
+                : [];
 
             usersInRoom.forEach(async (otherUser: any) => {
                 if (otherUser.user_id !== localUserId.current) {

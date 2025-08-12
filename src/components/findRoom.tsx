@@ -47,7 +47,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
     const handleJoinRoom = async (room: any, passwordAttempt: string) => {
         setError(""); // Clear previous errors
 
-        // If the room has no password_hash, it's public.
+        // Check if the room has no password_hash, it's public.
         if (!room.password_hash) {
             console.log(`Joined public room: ${room.name}`);
             onRoomSelect(room);

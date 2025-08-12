@@ -28,7 +28,8 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
         if (!supabase) return;
 
         try {
-            const { data, error } = await supabase.from("rooms").select("*");
+            // Fetching the room ID and name
+            const { data, error } = await supabase.from("rooms").select("id, name");
             if (error) {
                 throw error;
             }
@@ -42,25 +43,52 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
         }
     };
 
-    // --- Handle joining a room
+    // --- Handle joining a room with secure password validation
     const handleJoinRoom = async (room: any, passwordAttempt: string) => {
-        if (room.password !== passwordAttempt) {
-            setError("Incorrect password.");
+        setError(""); // Clear previous errors
+
+        // If the room has no password_hash, it's public.
+        if (!room.password_hash) {
+            console.log(`Joined public room: ${room.name}`);
+            onRoomSelect(room);
             return;
         }
-        setError("");
-        console.log(`Joined room: ${room.name}`);
-        onRoomSelect(room);
+
+        try {
+            // Call the secure Edge Function for password validation
+            const response = await fetch(
+                "https://jpsnxxouhuhrifoztpmc.supabase.co/functions/v1/validate-room-password",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ roomId: room.id, password: passwordAttempt }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (result.isValid) {
+                console.log(`Joined room: ${room.name}`);
+                onRoomSelect(room);
+            } else {
+                setError("Incorrect password. Please try again.");
+            }
+        } catch (e) {
+            console.error("Error validating password:", e);
+            setError("An error occurred during validation. Please try again.");
+        }
     };
 
-    // --- Handle creating a new room
+    // --- Handle creating a new room securely
     const handleCreateRoom = async () => {
         if (!supabase) {
             setCreateRoomMessage("Supabase not ready.");
             return;
         }
-        if (!newRoomName || !newRoomPassword) {
-            setCreateRoomMessage("Room name and password are required.");
+        if (!newRoomName) {
+            setCreateRoomMessage("Room name is required.");
             return;
         }
 
@@ -68,42 +96,28 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
         setCreateRoomMessage("");
 
         try {
-            // First, check if a room with the same name already exists
-            const { data: existingRooms, error: checkError } = await supabase
-                .from("rooms")
-                .select("name")
-                .eq("name", newRoomName);
+            // This function will hash the password on the server.
+            const response = await fetch("https://jpsnxxouhuhrifoztpmc.supabase.co/functions/v1/create-room-secure", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ roomName: newRoomName, password: newRoomPassword }),
+            });
 
-            if (checkError) {
-                throw checkError;
-            }
+            const result = await response.json();
 
-            if (existingRooms && existingRooms.length > 0) {
-                setCreateRoomMessage("A room with this name already exists. Please choose a different name.");
-                setCreateRoomLoading(false);
-                return;
-            }
+            if (response.ok) {
+                const newRoom = result.room;
+                setCreateRoomMessage(`Room "${newRoom.name}" created successfully!`);
 
-            // Insert the new room and select the created row
-            // The database will now automatically generate a UUID for the 'id'
-            const { data, error } = await supabase
-                .from("rooms")
-                .insert([{ name: newRoomName, password: newRoomPassword }])
-                .select();
-
-            if (error) {
-                throw error;
-            }
-
-            if (data && data.length > 0) {
-                const newRoom = data[0];
-                setCreateRoomMessage(`Room "${newRoomName}" created successfully!`);
-
-                // Automatically join the newly created room
-                handleJoinRoom(newRoom, newRoomPassword);
+                // Automatically join the newly created room (password is already known)
+                onRoomSelect(newRoom);
 
                 setNewRoomName("");
                 setNewRoomPassword("");
+            } else {
+                throw new Error(result.error || "Failed to create room.");
             }
         } catch (e: any) {
             console.error("Error creating room:", e.message);
@@ -282,7 +296,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                                 onChange={(e) => setNewRoomName(e.target.value)}
                                 className="w-full p-2 bg-n800 text-n100 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             />
-                            <label className="block text-n300">Password</label>
+                            <label className="block text-n300">Password (optional)</label>
                             <input
                                 type="password"
                                 placeholder="Enter password"

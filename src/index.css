@@ -61,3 +61,31 @@ button {
         color: #747bff;
     }
 }
+
+@keyframes rotate-out-90 {
+    from {
+        transform: rotate(-90deg);
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+.rotate-out {
+    animation: rotate-out-90 0.2s ease-in-out forwards;
+    transform-origin: center;
+}
+
+@keyframes rotate-in-90 {
+    from {
+        transform: rotate(90deg);
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+.rotate-in {
+    animation: rotate-in-90 0.2s ease-in-out forwards;
+    transform-origin: center;
+}

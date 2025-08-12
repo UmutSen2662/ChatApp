@@ -120,13 +120,11 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     useEffect(() => {
         if (!supabase) return;
 
-        // FIX: The channel name is now consistent with the Edge Function's cleanup job.
         // The cleanup function looks for presence on a channel named 'presence-tracker'.
         const presenceChannel = supabase.channel("presence-tracker", {
             config: {
                 presence: {
-                    // We need to track the user AND the room they are in, so the cleanup function can
-                    // accurately determine which rooms are active.
+                    // We need to track the user AND the room they are in
                     key: room.id,
                 },
             },
@@ -453,35 +451,43 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                             <>
                                 <button
                                     onClick={toggleMute}
-                                    className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
-                                        isMuted
-                                            ? "bg-red-600 hover:bg-red-700 text-white"
-                                            : "bg-n600 hover:bg-n500 text-n100"
-                                    }`}
+                                    className={
+                                        "font-bold p-2 rounded-lg transition-colors duration-200 bg-n600 hover:bg-n500"
+                                    }
                                 >
-                                    {isMuted ? "Unmute" : "Mute"}
+                                    {isMuted ? (
+                                        <img className="w-8 h-8" src="mute.svg" alt="Mute Icon" />
+                                    ) : (
+                                        <img className="w-8 h-8" src="unmute.svg" alt="Unmute Icon" />
+                                    )}
                                 </button>
                                 <button
                                     onClick={toggleSilence}
-                                    className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
-                                        isSilenced
-                                            ? "bg-red-600 hover:bg-red-700 text-white"
-                                            : "bg-n600 hover:bg-n500 text-n100"
-                                    }`}
+                                    className={
+                                        "font-bold p-2 rounded-lg transition-colors duration-200 bg-n600 hover:bg-n500"
+                                    }
                                 >
-                                    {isSilenced ? "Unsilence" : "Silence"}
+                                    {isSilenced ? (
+                                        <img className="w-8 h-8" src="deafen.svg" alt="Deafen Icon" />
+                                    ) : (
+                                        <img className="w-8 h-8" src="undeafen.svg" alt="Undeafen Icon" />
+                                    )}
                                 </button>
                             </>
                         )}
                         <button
                             onClick={isCalling ? endCall : startCall}
-                            className={`font-bold py-2 px-6 rounded-lg transition-colors duration-200 ${
+                            className={`font-bold p-2 rounded-lg transition-colors duration-400 ${
                                 isCalling
                                     ? "bg-red-600 hover:bg-red-700 text-white"
                                     : "bg-green-600 hover:bg-green-700 text-white"
                             }`}
                         >
-                            {isCalling ? "Disconnect" : "Start Voice Chat"}
+                            {isCalling ? (
+                                <img className="w-8 h-8 rotate-out" src="end-call.svg" alt="End Call Icon" />
+                            ) : (
+                                <img className="w-8 h-8 rotate-in" src="start-call.svg" alt="Start Call Icon" />
+                            )}
                         </button>
                     </div>
                 </div>

@@ -35,6 +35,16 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     const candidatesQueue = useRef<{ [key: string]: RTCIceCandidate[] }>({}); // New ref to queue ICE candidates
     const localUserId = useRef(localStorage.getItem("userId"));
 
+    // The new, crucial ICE servers configuration
+    const iceServersConfig = {
+        iceServers: [
+            // This is a free, public STUN server from Google. It helps peers discover their public IP.
+            { urls: "stun:stun.l.google.com:19302" },
+            // For maximum reliability, you would also add a TURN server here for relaying data.
+            // { urls: "turn:your-turn-server.com", username: "user", credential: "password" }
+        ],
+    };
+
     // --- Function to fetch initial messages and set up real-time subscription
     useEffect(() => {
         const fetchMessages = async () => {
@@ -189,7 +199,8 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
 
             usersInRoom.forEach(async (otherUser: any) => {
                 if (otherUser.user_id !== localUserId.current) {
-                    const peerConnection = new RTCPeerConnection();
+                    // PASS THE ICE SERVERS CONFIG HERE
+                    const peerConnection = new RTCPeerConnection(iceServersConfig);
                     peerConnections.current[otherUser.user_id] = peerConnection;
 
                     stream.getTracks().forEach((track) => {
@@ -315,7 +326,8 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                     let peerConnection = peerConnections.current[signal.sender_id];
 
                     if (!peerConnection) {
-                        peerConnection = new RTCPeerConnection();
+                        // PASS THE ICE SERVERS CONFIG HERE AS WELL
+                        peerConnection = new RTCPeerConnection(iceServersConfig);
                         peerConnections.current[signal.sender_id] = peerConnection;
 
                         if (localStream) {

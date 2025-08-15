@@ -560,7 +560,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Type a message..."
-                        className="flex-1 min-w-8 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        className="flex-1 min-w-16 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                     <button
                         type="submit"

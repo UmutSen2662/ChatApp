@@ -310,7 +310,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                             placeholder="Enter room name"
                             value={newRoomName}
                             onChange={(e) => setNewRoomName(e.target.value)}
-                            className="w-full p-2 bg-n800 text-n100 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full min-w-16 p-2 bg-n800 text-n100 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                         <label className="block text-n300">Password (optional)</label>
                         <input
@@ -318,7 +318,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                             placeholder="Enter password"
                             value={newRoomPassword}
                             onChange={(e) => setNewRoomPassword(e.target.value)}
-                            className="w-full p-2 bg-n800 text-n100 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full min-w-16 p-2 bg-n800 text-n100 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         />
                     </div>
                     <button

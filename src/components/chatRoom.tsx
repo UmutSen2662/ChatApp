@@ -445,25 +445,22 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                 </div>
 
                 {/* --- Active Participants and WebRTC Controls --- */}
-                <div className="flex flex-wrap gap-4 pb-4">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-xl font-semibold text-n100">Active Participants</h3>
-                        {participants.length > 0 ? (
-                            <ul className="flex flex-wrap gap-2 text-n300">
-                                <li className="bg-n700 px-3 py-1 rounded-full text-sm">
-                                    <span style={{ color: user.color }}>{user.name} (You)</span>
+                <div className="flex flex-wrap md:flex-nowrap gap-4 pb-4">
+                    {participants.length > 0 ? (
+                        <ul className="h-fit flex flex-nowrap md:flex-wrap overflow-x-auto gap-2 text-n300">
+                            <li className="bg-n700 px-3 py-1 text-nowrap rounded-full text-sm">
+                                <span style={{ color: user.color }}>{user.name} (You)</span>
+                            </li>
+                            {participants.map((p) => (
+                                <li key={p.id} className="bg-n700 px-3 py-1 text-nowrap rounded-full text-sm">
+                                    <span style={{ color: p.user_color }}>{p.user_name}</span>
                                 </li>
-                                {participants.map((p) => (
-                                    <li key={p.id} className="bg-n700 px-3 py-1 rounded-full text-sm">
-                                        <span style={{ color: p.user_color }}>{p.user_name}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-n500">No other users in this room.</p>
-                        )}
-                    </div>
-                    <div className="flex gap-2 ml-auto items-center">
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-n500">No other users in this room.</p>
+                    )}
+                    <div className="min-w-40 ml-auto flex items-start justify-end gap-2">
                         {isCalling && (
                             <>
                                 <button

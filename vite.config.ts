@@ -15,7 +15,7 @@ export default defineConfig({
                 name: "Chat App",
                 short_name: "Chat App",
                 description: "A real-time text and voice chat application.",
-                theme_color: "#2b2b2b",
+                theme_color: "#121212",
                 background_color: "#121212",
                 display: "standalone",
                 icons: [

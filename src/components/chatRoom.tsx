@@ -425,7 +425,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
 
     return (
         <div className="w-full h-[100dvh] bg-n900 text-n100 p-4 flex items-center justify-center font-inter">
-            <div className="w-full max-w-6xl h-full p-8 bg-n800 rounded-2xl flex flex-col gap-4">
+            <div className="w-full max-w-6xl h-full p-4 md:p-8 bg-n800 rounded-2xl flex flex-col gap-4">
                 {/* All the remote audio streams are rendered here, but they are hidden. */}
                 <div className="hidden">
                     {remoteStreams.map((stream, index) => (
@@ -435,7 +435,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
 
                 {/* --- Chat Header --- */}
                 <div className="flex justify-between items-center pb-4 border-b border-n700">
-                    <h2 className="text-3xl font-bold text-n100">Room: {room.name}</h2>
+                    <h2 className="text-3xl font-bold text-n100 truncate">Room: {room.name}</h2>
                     <button
                         onClick={handleLeaveRoom}
                         className="text-white font-bold text-2xl py-2 px-4 rounded-md hover:bg-red-700 transition-all duration-200"
@@ -445,7 +445,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                 </div>
 
                 {/* --- Active Participants and WebRTC Controls --- */}
-                <div className="flex justify-between pb-4">
+                <div className="flex flex-wrap gap-4 pb-4">
                     <div className="flex flex-col gap-2">
                         <h3 className="text-xl font-semibold text-n100">Active Participants</h3>
                         {participants.length > 0 ? (
@@ -463,7 +463,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                             <p className="text-n500">No other users in this room.</p>
                         )}
                     </div>
-                    <div className="flex gap-2 justify-between items-center">
+                    <div className="flex gap-2 ml-auto items-center">
                         {isCalling && (
                             <>
                                 <button
@@ -560,14 +560,18 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Type a message..."
-                        className="flex-1 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        className="flex-1 min-w-8 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     />
                     <button
                         type="submit"
                         disabled={isSending}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200 disabled:bg-n500 disabled:pointer-events-none"
+                        className="w-12 bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded-lg overflow-hidden transition-colors duration-200 disabled:bg-n500 disabled:pointer-events-none"
                     >
-                        {isSending ? "Sending..." : "Send"}
+                        {isSending ? (
+                            <span className="w-8 h-8 ellipsis"></span>
+                        ) : (
+                            <img className="w-8 h-8" src="send.svg" alt="Send Icon" />
+                        )}
                     </button>
                 </form>
             </div>

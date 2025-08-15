@@ -89,3 +89,23 @@ button {
     animation: rotate-in-90 0.2s ease-in-out forwards;
     transform-origin: center;
 }
+
+@keyframes ellipsis {
+    0% {
+        content: "...";
+    }
+    25% {
+        content: "'..";
+    }
+    50% {
+        content: ".'.";
+    }
+    75% {
+        content: "..'";
+    }
+}
+
+.ellipsis::after {
+    content: "";
+    animation: ellipsis 0.9s infinite steps(1);
+}

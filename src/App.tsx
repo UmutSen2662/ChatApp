@@ -11,9 +11,7 @@ const supabaseKey =
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const App = () => {
-    // State to hold the currently selected room
     const [selectedRoom, setSelectedRoom] = useState(null);
-    // State to control which component to display
     const [view, setView] = useState("findRoom");
 
     // Centralized user data state, initialized from local storage
@@ -29,13 +27,11 @@ const App = () => {
         localStorage.setItem("userColor", userData.color);
     }, [userData]);
 
-    // Function to handle a user selecting a room and entering the chat
     const handleRoomSelect = (room: any) => {
         setSelectedRoom(room);
         setView("chatRoom");
     };
 
-    // Function to handle a user leaving the chat room
     const handleLeaveRoom = () => {
         setSelectedRoom(null);
         setView("findRoom");

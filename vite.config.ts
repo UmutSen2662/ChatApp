@@ -17,7 +17,9 @@ export default defineConfig({
                 description: "A real-time text and voice chat application.",
                 theme_color: "#121212",
                 background_color: "#121212",
-                display: "standalone",
+                display_override: ["standalone", "minimal-ui", "browser", "window-controls-overlay"],
+                orientation: "natural",
+                lang: "en",
                 icons: [
                     {
                         src: "pwa-192x192.png",
@@ -30,6 +32,7 @@ export default defineConfig({
                         type: "image/png",
                     },
                 ],
+                categories: ["chat", "social", "communication"],
             },
             workbox: {
                 // You can add more caching strategies here for specific assets

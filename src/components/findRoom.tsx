@@ -337,6 +337,13 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                     </p>
                 </div>
             </div>
+            <a
+                className="ml-auto md:absolute md:bottom-4 md:right-4"
+                href="https://github.com/UmutSen2662/chat-app"
+                target="_blank"
+            >
+                Github Page
+            </a>
         </div>
     );
 };

@@ -290,14 +290,14 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                     className="hidden"
                 />
                 {imagePreview && (
-                    <div className="absolute -top-20 left-0 pl-2 bg-n700 rounded-lg flex items-center">
-                        <img src={imagePreview} alt="Image Preview" className="h-12 w-16 object-cover rounded-md" />
+                    <div className="absolute -top-16 left-0 pl-2 bg-n700 rounded-lg flex items-center">
+                        <img src={imagePreview} alt="Image Preview" className="h-16 w-20 object-cover rounded-md" />
                         <button
                             onClick={() => {
                                 setImageFile(null);
                                 setImagePreview(null);
                             }}
-                            className="text-n300 hover:text-red-500 w-10 h-16 font-bold text-xl"
+                            className="text-n300 hover:text-red-500 w-12 h-16 font-bold text-xl"
                         >
                             X
                         </button>

@@ -94,6 +94,11 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
             setCreateRoomMessage("Room name is required.");
             return;
         }
+        const existingRoom = rooms.find((r: any) => r.name === newRoomName);
+        if (existingRoom) {
+            setCreateRoomMessage("Room name is already in use.");
+            return;
+        }
 
         setCreateRoomLoading(true);
         setCreateRoomMessage("");

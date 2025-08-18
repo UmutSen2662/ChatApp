@@ -62,6 +62,28 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
         };
     }, [supabase, room.id]);
 
+    // Update last_active_at when the component mounts and on a timer
+    useEffect(() => {
+        const updateLastActive = async () => {
+            if (supabase) {
+                try {
+                    await supabase.from("rooms").update({ last_active_at: new Date().toISOString() }).eq("id", room.id);
+                } catch (e: any) {
+                    console.error("Error updating last_active_at:", e.message);
+                }
+            }
+        };
+
+        // Update on mount
+        updateLastActive();
+
+        // Also update every 30 seconds to keep the timestamp fresh
+        const interval = setInterval(updateLastActive, 30 * 1000);
+
+        // Cleanup the interval
+        return () => clearInterval(interval);
+    }, [supabase, room.id]);
+
     // Auto-scroll to the bottom when new messages arrive
     useEffect(() => {
         if (chatContainerRef.current) {
@@ -146,6 +168,9 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
             if (imageFile) {
                 imageUrl = await uploadImage(imageFile);
             }
+
+            // Update the last_active_at timestamp before inserting the new message
+            await supabase.from("rooms").update({ last_active_at: new Date().toISOString() }).eq("id", room.id);
 
             await supabase.from("messages").insert({
                 room_id: room.id,

@@ -10,6 +10,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
+    const [transitionEnabled, setTransitionEnabled] = useState(false);
+    const [ignoreNextClick, setIgnoreNextClick] = useState(false); // block overlay click after drag
     const imageRef = useRef<HTMLImageElement>(null);
 
     const stateRef = useRef({ zoom, position });
@@ -17,8 +19,10 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
         stateRef.current = { zoom, position };
     }, [zoom, position]);
 
-    // Clamp position based on image natural size and viewport
-    const clampPosition = (pos: { x: number; y: number }, zoom: number) => {
+    const ELASTIC_MARGIN = 50;
+    const PADDING = 50;
+
+    const clampPosition = (pos: { x: number; y: number }, zoom: number, elastic = false) => {
         if (!imageRef.current) return pos;
 
         const naturalWidth = imageRef.current.naturalWidth;
@@ -30,14 +34,16 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        const maxX = Math.max(0, (imgScaledWidth - viewportWidth) / 2);
+        const maxX = Math.max(0, (imgScaledWidth - (viewportWidth - PADDING * 2)) / 2);
         const minX = -maxX;
-        const maxY = Math.max(0, (imgScaledHeight - viewportHeight) / 2);
+        const maxY = Math.max(0, (imgScaledHeight - (viewportHeight - PADDING * 2)) / 2);
         const minY = -maxY;
 
+        const margin = elastic ? ELASTIC_MARGIN : 0;
+
         return {
-            x: Math.max(minX, Math.min(maxX, pos.x)),
-            y: Math.max(minY, Math.min(maxY, pos.y)),
+            x: Math.max(minX - margin, Math.min(maxX + margin, pos.x)),
+            y: Math.max(minY - margin, Math.min(maxY + margin, pos.y)),
         };
     };
 
@@ -62,8 +68,9 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
                     x: currentPosition.x - mouseX * (zoomRatio - 1),
                     y: currentPosition.y - mouseY * (zoomRatio - 1),
                 };
-                setPosition(clampPosition(newPosition, finalZoom));
+
                 setZoom(finalZoom);
+                setPosition(clampPosition(newPosition, finalZoom, true));
             }
         };
 
@@ -71,43 +78,63 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
         return () => window.removeEventListener("wheel", handleScroll);
     }, []);
 
-    // Drag handlers
+    // Dragging
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsDragging(true);
+        setTransitionEnabled(false);
         setStartDrag({ x: e.clientX - position.x, y: e.clientY - position.y });
+        setIgnoreNextClick(true); // start ignoring overlay clicks
     };
 
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const rawPosition = { x: e.clientX - startDrag.x, y: e.clientY - startDrag.y };
-        setPosition(clampPosition(rawPosition, zoom));
-    };
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging) return;
+            const rawPosition = { x: e.clientX - startDrag.x, y: e.clientY - startDrag.y };
+            setPosition(clampPosition(rawPosition, zoom, true));
+        };
 
-    const handleMouseUp = () => setIsDragging(false);
+        const handleMouseUp = () => {
+            if (!isDragging) return;
+            setIsDragging(false);
+            setTransitionEnabled(true);
+            setPosition(clampPosition(position, zoom, false));
+
+            // reset ignore flag after drag ends
+            setTimeout(() => setIgnoreNextClick(false), 0);
+        };
+
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [isDragging, startDrag, zoom, position]);
 
     // Reset on image change
     useEffect(() => {
         setZoom(1);
         setPosition({ x: 0, y: 0 });
+        setTransitionEnabled(false);
+        setIgnoreNextClick(false);
     }, [imageUrl]);
 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur p-4"
-            onClick={onClose}
+            onClick={() => {
+                if (!ignoreNextClick) onClose();
+            }}
         >
             <div
                 className="relative cursor-grab"
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
                 style={{
                     transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                    transition: isDragging ? "none" : "transform 0.15s ease-out",
+                    transition: transitionEnabled ? "transform 0.2s ease-out" : "none",
                     transformOrigin: "center center",
                 }}
             >

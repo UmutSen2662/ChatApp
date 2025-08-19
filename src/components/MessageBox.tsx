@@ -8,9 +8,11 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
     const [imageLoading, setImageLoading] = useState<Record<string, boolean>>({});
+    const [isDragging, setIsDragging] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const dragCounter = useRef(0); // This is the new drag counter
     const MAX_MESSAGE_LENGTH = 2000;
 
     // Function to fetch initial messages and set up real-time subscription
@@ -77,8 +79,8 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
         // Update on mount
         updateLastActive();
 
-        // Also update every 30 seconds to keep the timestamp fresh
-        const interval = setInterval(updateLastActive, 30 * 1000);
+        // Also update every 5 minutes to keep the timestamp fresh
+        const interval = setInterval(updateLastActive, 5 * 60 * 1000);
 
         // Cleanup the interval
         return () => clearInterval(interval);
@@ -99,25 +101,42 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
         }
     }, [newMessage]);
 
-    // Function to handle image selection and conversion to WebP or retain GIF
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
+    // Function to process a file and set up the preview
+    const processImageFile = (file: File) => {
         if (file) {
             // If the file is a GIF, bypass conversion and use the original file
             if (file.type === "image/gif") {
                 setImageFile(file);
                 setImagePreview(URL.createObjectURL(file));
             } else {
-                // For other image types, convert to WebP
+                // For other image types, convert and resize to WebP
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
+                        // Resizing logic for resolution control
+                        const MAX_SIZE = 1024; // pixels
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+
+                        // Use a canvas to resize and convert the image
                         const canvas = document.createElement("canvas");
-                        canvas.width = img.width;
-                        canvas.height = img.height;
+                        canvas.width = width;
+                        canvas.height = height;
                         const ctx = canvas.getContext("2d");
-                        ctx?.drawImage(img, 0, 0);
+                        ctx?.drawImage(img, 0, 0, width, height);
 
                         canvas.toBlob(
                             (blob) => {
@@ -136,6 +155,68 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                 };
                 reader.readAsDataURL(file);
             }
+        }
+    };
+
+    // Function to handle image selection from the file input
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            processImageFile(file);
+        }
+    };
+
+    // Handle pasted images from the clipboard
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = e.clipboardData?.items;
+        if (items) {
+            for (let i = 0; i < items.length; i++) {
+                // Check if the item is a file and an image
+                if (items[i].kind === "file" && items[i].type.startsWith("image/")) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        e.preventDefault(); // Prevent the image data from being pasted as text
+                        processImageFile(file); // Process the file
+                        break; // Stop after finding the first image
+                    }
+                }
+            }
+        }
+    };
+
+    // Handle drag-and-drop events
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current++;
+        if (dragCounter.current === 1) {
+            setIsDragging(true);
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current--;
+        if (dragCounter.current === 0) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounter.current = 0; // Reset counter on drop
+        setIsDragging(false);
+
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith("image/")) {
+            processImageFile(file);
         }
     };
 
@@ -207,7 +288,21 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
     return (
         <>
             {/* Message Container */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto pr-4 flex flex-col">
+            <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto pr-4 flex flex-col relative"
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                {/* Drag-and-drop overlay */}
+                {isDragging && (
+                    <div className="absolute inset-0 z-10 bg-n800/80 flex items-center justify-center rounded-lg border-2 border-dashed border-blue-500 text-blue-300 text-xl font-semibold">
+                        Drop image here
+                    </div>
+                )}
+
                 {messages.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center text-n300 text-lg">
                         <p>No messages yet. Say hello!</p>
@@ -307,6 +402,7 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                     ref={textareaRef}
                     value={newMessage}
                     onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
                     className={"flex-1 p-3 bg-n700 text-n100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none overflow-hidden".concat(

@@ -334,40 +334,41 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                                         {message.user_name}
                                     </span>
                                 )}
-                                <div className="bg-n700 flex gap-2 items-center rounded-lg p-3 mt-2 w-fit whitespace-pre-wrap">
-                                    <div className={message.image_url ? "max-w-100 flex flex-col gap-2" : ""}>
-                                        {message.image_url && imageLoading[message.image_url] && (
-                                            <div className="w-64 h-48 bg-n600 rounded-lg animate-pulse flex items-center justify-center text-n300">
-                                                Loading...
-                                            </div>
-                                        )}
-                                        {message.image_url && (
-                                            <img
-                                                src={message.image_url}
-                                                alt="Chat Image"
-                                                className={`max-h-64 rounded-lg object-contain ${
-                                                    imageLoading[message.image_url] ? "hidden" : "block"
-                                                }`}
-                                                onLoad={() =>
-                                                    setImageLoading((prev) => ({ ...prev, [message.image_url]: false }))
-                                                }
-                                                onError={() => {
-                                                    console.error(`Error loading image from ${message.image_url}`);
-                                                    setImageLoading((prev) => ({
-                                                        ...prev,
-                                                        [message.image_url]: false,
-                                                    }));
-                                                }}
-                                            />
-                                        )}
-                                        <p className="text-n100">{message.content}</p>
+
+                                <div className="w-full bg-n700 flex flex-col mt-2 gap-2 rounded-lg p-3 whitespace-pre-wrap">
+                                    {message.image_url && imageLoading[message.image_url] && (
+                                        <div className="w-64 h-48 bg-n600 rounded-lg animate-pulse flex items-center justify-center text-n300">
+                                            Loading...
+                                        </div>
+                                    )}
+                                    {message.image_url && (
+                                        <img
+                                            src={message.image_url}
+                                            alt="Chat Image"
+                                            className={`max-h-64 rounded-lg object-contain mx-auto ${
+                                                imageLoading[message.image_url] ? "hidden" : "block"
+                                            }`}
+                                            onLoad={() =>
+                                                setImageLoading((prev) => ({ ...prev, [message.image_url]: false }))
+                                            }
+                                            onError={() => {
+                                                console.error(`Error loading image from ${message.image_url}`);
+                                                setImageLoading((prev) => ({
+                                                    ...prev,
+                                                    [message.image_url]: false,
+                                                }));
+                                            }}
+                                        />
+                                    )}
+                                    <div className="flex gap-2">
+                                        <p className="text-n100 mr-auto">{message.content}</p>
+                                        <span className="text-n400 text-xs h-fit text-nowrap mt-auto">
+                                            {new Date(message.created_at).toLocaleTimeString("en-GB", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </span>
                                     </div>
-                                    <span className="text-n400 text-xs h-fit text-nowrap mt-auto">
-                                        {new Date(message.created_at).toLocaleTimeString("en-GB", {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </span>
                                 </div>
                             </div>
                         );

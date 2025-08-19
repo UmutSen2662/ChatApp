@@ -333,13 +333,17 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                             <div
                                 key={message.id}
                                 className="flex flex-col max-w-[80%]"
-                                style={{ marginLeft: message.user_id === localUserId ? "auto" : "0" }}
+                                style={{
+                                    marginLeft: message.user_id === localUserId ? "auto" : "0",
+                                    marginRight: message.user_id === localUserId ? "0" : "auto",
+                                }}
                             >
                                 {showName && (
                                     <span
                                         style={{
                                             color: message.user_color,
                                             marginLeft: message.user_id === localUserId ? "auto" : "0",
+                                            marginRight: message.user_id === localUserId ? "0" : "auto",
                                         }}
                                         className="font-semibold mt-4"
                                     >

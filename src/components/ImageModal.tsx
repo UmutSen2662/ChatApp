@@ -72,7 +72,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
         return () => window.removeEventListener("wheel", handleWheel);
     }, [zoom, position]);
 
-    // Dragging (mouse + touch)
+    // Dragging helpers
     const startDragHandler = (clientX: number, clientY: number) => {
         setIsDragging(true);
         setTransitionEnabled(false);
@@ -121,10 +121,12 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
 
             // Double-tap detection
             if (now - lastTapRef.current < 300) {
-                // Toggle zoom
+                setTransitionEnabled(true);
                 const newZoom = zoom === 1 ? 1.5 : 1;
                 setZoom(newZoom);
-                setPosition({ x: 0, y: 0 });
+
+                // Clamp position smoothly after zoom
+                setPosition(clampPosition({ x: 0, y: 0 }, newZoom, false));
             }
             lastTapRef.current = now;
 

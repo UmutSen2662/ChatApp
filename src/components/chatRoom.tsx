@@ -76,7 +76,7 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
 
     return (
         <div className="w-full h-[100dvh] bg-n900 text-n100 md:p-4 flex items-center justify-center font-inter">
-            <div className="w-full max-w-6xl h-full p-4 md:p-8 md:rounded-2xl bg-n800 flex flex-col gap-4">
+            <div className="w-full max-w-6xl h-full p-4 md:p-8 md:rounded-2xl bg-n800 flex flex-col gap-4 relative">
                 {/* Header */}
                 <div className="flex justify-between items-center pb-4 border-b border-n700">
                     <h2 className="text-3xl font-bold text-n100 truncate">Room: {room.name}</h2>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ImageModal from "./ImageModal";
 
 const MessageBox = ({ supabase, room, user, localUserId }: any) => {
     // Message and UI states
@@ -9,10 +10,11 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
     const [isSending, setIsSending] = useState(false);
     const [imageLoading, setImageLoading] = useState<Record<string, boolean>>({});
     const [isDragging, setIsDragging] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
-    const dragCounter = useRef(0); // This is the new drag counter
+    const dragCounter = useRef(0);
     const MAX_MESSAGE_LENGTH = 2000;
 
     // Function to fetch initial messages and set up real-time subscription
@@ -285,12 +287,22 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
         }
     };
 
+    // Function to handle image click and open the modal
+    const handleImageClick = (imageUrl: string) => {
+        setSelectedImage(imageUrl);
+    };
+
+    // Function to close the modal
+    const handleCloseModal = () => {
+        setSelectedImage(null);
+    };
+
     return (
         <>
             {/* Message Container */}
             <div
                 ref={chatContainerRef}
-                className="flex-1 overflow-y-auto pr-4 flex flex-col relative"
+                className="flex-1 overflow-y-auto pr-4 flex flex-col"
                 onDragEnter={handleDragEnter}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -347,7 +359,8 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                                             alt="Chat Image"
                                             className={`max-h-64 rounded-lg object-contain mx-auto ${
                                                 imageLoading[message.image_url] ? "hidden" : "block"
-                                            }`}
+                                            } cursor-pointer`}
+                                            onClick={() => handleImageClick(message.image_url)}
                                             onLoad={() =>
                                                 setImageLoading((prev) => ({ ...prev, [message.image_url]: false }))
                                             }
@@ -453,6 +466,9 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                     </div>
                 )}
             </form>
+
+            {/* Render the ImageModal component if an image is selected */}
+            {selectedImage && <ImageModal imageUrl={selectedImage} onClose={handleCloseModal} />}
         </>
     );
 };

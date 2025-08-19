@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import MessageBox from "../components/MessageBox";
-import VoiceChat from "../components/VoiceChat";
+import MessageBox from "./MessageBox";
+import VoiceChat from "./VoiceChat";
 
 const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     // Only keep states and refs that are shared or truly belong to the main container
@@ -9,6 +9,30 @@ const ChatRoom = ({ supabase, room, user, onLeaveRoom }: any) => {
     const [isSilenced, setIsSilenced] = useState(false);
     const localUserId = useRef(localStorage.getItem("userId"));
     const voiceChatRef = useRef<any>(null);
+
+    // This useEffect handles the browser's back button
+    useEffect(() => {
+        // We only add a history entry if a room is active and we haven't already.
+        if (room) {
+            // Push a new state to the history stack. This doesn't change the URL
+            // but creates a new entry for the back button to "land" on.
+            history.pushState(null, "", window.location.href);
+
+            // Add a listener for the popstate event, which is fired when the user
+            // navigates history (e.g., clicks the back button).
+            const handlePopState = () => {
+                handleLeaveRoom();
+            };
+            window.addEventListener("popstate", handlePopState);
+
+            // Clean-up function to remove the event listener and navigate forward
+            // in the history to prevent unintended behavior.
+            return () => {
+                window.removeEventListener("popstate", handlePopState);
+                history.go(1);
+            };
+        }
+    }, [room]); // Depend on 'room' to run this effect only when a room is selected.
 
     // Supabase Presence channel to track users
     useEffect(() => {

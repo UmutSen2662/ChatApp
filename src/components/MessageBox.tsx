@@ -117,7 +117,7 @@ const MessageBox = ({ supabase, room, user, localUserId }: any) => {
                     const img = new Image();
                     img.onload = () => {
                         // Resizing logic for resolution control
-                        const MAX_SIZE = 1024; // pixels
+                        const MAX_SIZE = 1920; // pixels
                         let width = img.width;
                         let height = img.height;
 

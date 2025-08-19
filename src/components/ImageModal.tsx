@@ -6,76 +6,88 @@ interface ImageModalProps {
 }
 
 const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
-    // State to manage the image's transform properties
     const [zoom, setZoom] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
-    const imageContainerRef = useRef<HTMLDivElement>(null);
+    const imageRef = useRef<HTMLImageElement>(null);
 
-    // Use useEffect to manually add the non-passive event listener
+    const stateRef = useRef({ zoom, position });
+    useEffect(() => {
+        stateRef.current = { zoom, position };
+    }, [zoom, position]);
+
+    // Clamp position based on image natural size and viewport
+    const clampPosition = (pos: { x: number; y: number }, zoom: number) => {
+        if (!imageRef.current) return pos;
+
+        const naturalWidth = imageRef.current.naturalWidth;
+        const naturalHeight = imageRef.current.naturalHeight;
+
+        const imgScaledWidth = naturalWidth * zoom;
+        const imgScaledHeight = naturalHeight * zoom;
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        const maxX = Math.max(0, (imgScaledWidth - viewportWidth) / 2);
+        const minX = -maxX;
+        const maxY = Math.max(0, (imgScaledHeight - viewportHeight) / 2);
+        const minY = -maxY;
+
+        return {
+            x: Math.max(minX, Math.min(maxX, pos.x)),
+            y: Math.max(minY, Math.min(maxY, pos.y)),
+        };
+    };
+
+    // Zoom handler
     useEffect(() => {
         const handleScroll = (e: WheelEvent) => {
             e.preventDefault();
+            if (!imageRef.current) return;
 
-            if (!imageContainerRef.current) return;
+            const { zoom: currentZoom, position: currentPosition } = stateRef.current;
+            const rect = imageRef.current.getBoundingClientRect();
 
-            const newZoom = e.deltaY > 0 ? zoom / 1.1 : zoom * 1.1;
+            const mouseX = e.clientX - rect.left - rect.width / 2;
+            const mouseY = e.clientY - rect.top - rect.height / 2;
+
+            const newZoom = e.deltaY > 0 ? currentZoom / 1.1 : currentZoom * 1.1;
             const finalZoom = Math.min(8, Math.max(1, newZoom));
 
-            const zoomRatio = finalZoom / zoom;
-
-            // Get mouse position relative to the container's current state
-            const rect = imageContainerRef.current.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            // Calculate new position to anchor the zoom to the cursor
-            const newPosition = {
-                x: mouseX - (mouseX - position.x) * zoomRatio,
-                y: mouseY - (mouseY - position.y) * zoomRatio,
-            };
-            console.log(mouseX * zoomRatio, mouseX);
-
-            setZoom(finalZoom);
-            setPosition(newPosition);
-        };
-
-        const container = imageContainerRef.current;
-        if (container) {
-            container.addEventListener("wheel", handleScroll, { passive: false });
-        }
-
-        return () => {
-            if (container) {
-                container.removeEventListener("wheel", handleScroll);
+            if (finalZoom !== currentZoom) {
+                const zoomRatio = finalZoom / currentZoom;
+                const newPosition = {
+                    x: currentPosition.x - mouseX * (zoomRatio - 1),
+                    y: currentPosition.y - mouseY * (zoomRatio - 1),
+                };
+                setPosition(clampPosition(newPosition, finalZoom));
+                setZoom(finalZoom);
             }
         };
-    }, [zoom, position]); // The dependency array must include `zoom` and `position` to get the latest state
 
-    // Mouse down event to start dragging
+        window.addEventListener("wheel", handleScroll, { passive: false });
+        return () => window.removeEventListener("wheel", handleScroll);
+    }, []);
+
+    // Drag handlers
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsDragging(true);
         setStartDrag({ x: e.clientX - position.x, y: e.clientY - position.y });
     };
 
-    // Mouse move event to update the image's position
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDragging) return;
         e.preventDefault();
-        setPosition({
-            x: e.clientX - startDrag.x,
-            y: e.clientY - startDrag.y,
-        });
+        const rawPosition = { x: e.clientX - startDrag.x, y: e.clientY - startDrag.y };
+        setPosition(clampPosition(rawPosition, zoom));
     };
 
-    // Mouse up event to stop dragging
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
+    const handleMouseUp = () => setIsDragging(false);
 
-    // Reset zoom and position when the modal opens or the image changes
+    // Reset on image change
     useEffect(() => {
         setZoom(1);
         setPosition({ x: 0, y: 0 });
@@ -86,10 +98,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur p-4"
             onClick={onClose}
         >
-            {/* The modal content, preventing click events from bubbling to the overlay */}
             <div
-                ref={imageContainerRef}
-                className={"relative cursor-grab"}
+                className="relative cursor-grab"
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -97,17 +107,16 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
                 onMouseLeave={handleMouseUp}
                 style={{
                     transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-                    transition: isDragging ? "none" : "transform 0.2s ease-out",
+                    transition: isDragging ? "none" : "transform 0.15s ease-out",
                     transformOrigin: "center center",
                 }}
             >
                 <img
+                    ref={imageRef}
                     src={imageUrl}
-                    alt="Full-size image"
+                    alt="Full-size"
                     className="max-w-full max-h-screen object-contain"
-                    style={{
-                        pointerEvents: "none",
-                    }}
+                    style={{ pointerEvents: "none" }}
                 />
             </div>
         </div>

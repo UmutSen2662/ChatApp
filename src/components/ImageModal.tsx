@@ -12,14 +12,9 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
     const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
     const [transitionEnabled, setTransitionEnabled] = useState(false);
     const [ignoreNextClick, setIgnoreNextClick] = useState(false);
-    const [touchDistance, setTouchDistance] = useState(0);
-    const [initialZoom, setInitialZoom] = useState(1);
-    const imageRef = useRef<HTMLImageElement>(null);
 
-    const stateRef = useRef({ zoom, position });
-    useEffect(() => {
-        stateRef.current = { zoom, position };
-    }, [zoom, position]);
+    const imageRef = useRef<HTMLImageElement>(null);
+    const lastTapRef = useRef<number>(0);
 
     const ELASTIC_MARGIN = 50;
     const PADDING = 50;
@@ -49,26 +44,24 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
         };
     };
 
-    // Mouse Zoom
+    // Mouse wheel zoom (desktop)
     useEffect(() => {
         const handleWheel = (e: WheelEvent) => {
             e.preventDefault();
             if (!imageRef.current) return;
 
-            const { zoom: currentZoom, position: currentPosition } = stateRef.current;
             const rect = imageRef.current.getBoundingClientRect();
-
             const mouseX = e.clientX - rect.left - rect.width / 2;
             const mouseY = e.clientY - rect.top - rect.height / 2;
 
-            const newZoom = e.deltaY > 0 ? currentZoom / 1.1 : currentZoom * 1.1;
+            const newZoom = e.deltaY > 0 ? zoom / 1.1 : zoom * 1.1;
             const finalZoom = Math.min(8, Math.max(1, newZoom));
 
-            if (finalZoom !== currentZoom) {
-                const zoomRatio = finalZoom / currentZoom;
+            if (finalZoom !== zoom) {
+                const zoomRatio = finalZoom / zoom;
                 const newPosition = {
-                    x: currentPosition.x - mouseX * (zoomRatio - 1),
-                    y: currentPosition.y - mouseY * (zoomRatio - 1),
+                    x: position.x - mouseX * (zoomRatio - 1),
+                    y: position.y - mouseY * (zoomRatio - 1),
                 };
                 setZoom(finalZoom);
                 setPosition(clampPosition(newPosition, finalZoom, true));
@@ -77,31 +70,39 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
 
         window.addEventListener("wheel", handleWheel, { passive: false });
         return () => window.removeEventListener("wheel", handleWheel);
-    }, []);
+    }, [zoom, position]);
 
-    // Mouse Dragging
-    const handleMouseDown = (e: React.MouseEvent) => {
-        e.preventDefault();
+    // Dragging (mouse + touch)
+    const startDragHandler = (clientX: number, clientY: number) => {
         setIsDragging(true);
         setTransitionEnabled(false);
-        setStartDrag({ x: e.clientX - position.x, y: e.clientY - position.y });
+        setStartDrag({ x: clientX - position.x, y: clientY - position.y });
         setIgnoreNextClick(true);
     };
 
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isDragging) return;
-            const rawPosition = { x: e.clientX - startDrag.x, y: e.clientY - startDrag.y };
-            setPosition(clampPosition(rawPosition, zoom, true));
-        };
+    const moveDragHandler = (clientX: number, clientY: number) => {
+        if (!isDragging) return;
+        const rawPos = { x: clientX - startDrag.x, y: clientY - startDrag.y };
+        setPosition(clampPosition(rawPos, zoom, true));
+    };
 
-        const handleMouseUp = () => {
-            if (!isDragging) return;
-            setIsDragging(false);
-            setTransitionEnabled(true);
-            setPosition(clampPosition(position, zoom, false));
-            setTimeout(() => setIgnoreNextClick(false), 0);
-        };
+    const endDragHandler = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+        setTransitionEnabled(true);
+        setPosition(clampPosition(position, zoom, false));
+        setTimeout(() => setIgnoreNextClick(false), 0);
+    };
+
+    // Mouse events
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        startDragHandler(e.clientX, e.clientY);
+    };
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => moveDragHandler(e.clientX, e.clientY);
+        const handleMouseUp = () => endDragHandler();
 
         window.addEventListener("mousemove", handleMouseMove);
         window.addEventListener("mouseup", handleMouseUp);
@@ -110,56 +111,35 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
             window.removeEventListener("mousemove", handleMouseMove);
             window.removeEventListener("mouseup", handleMouseUp);
         };
-    }, [isDragging, startDrag, zoom, position]);
+    }, [isDragging, startDrag, position, zoom]);
 
-    // Touch Drag & Pinch
+    // Touch events
     const handleTouchStart = (e: React.TouchEvent) => {
         if (e.touches.length === 1) {
-            // Single finger drag
             const touch = e.touches[0];
-            setIsDragging(true);
-            setStartDrag({ x: touch.clientX - position.x, y: touch.clientY - position.y });
-            setIgnoreNextClick(true);
-        } else if (e.touches.length === 2) {
-            // Pinch zoom
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            setTouchDistance(Math.hypot(dx, dy));
-            setInitialZoom(zoom);
+            const now = Date.now();
+
+            // Double-tap detection
+            if (now - lastTapRef.current < 300) {
+                // Toggle zoom
+                const newZoom = zoom === 1 ? 1.5 : 1;
+                setZoom(newZoom);
+                setPosition({ x: 0, y: 0 });
+            }
+            lastTapRef.current = now;
+
+            startDragHandler(touch.clientX, touch.clientY);
         }
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (!imageRef.current) return;
-        if (e.touches.length === 1 && isDragging) {
-            e.preventDefault(); // prevent page scroll
+        if (e.touches.length === 1) {
             const touch = e.touches[0];
-            const rawPosition = { x: touch.clientX - startDrag.x, y: touch.clientY - startDrag.y };
-            setPosition(clampPosition(rawPosition, zoom, true));
-        } else if (e.touches.length === 2) {
-            e.preventDefault(); // prevent browser pinch zoom
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const distance = Math.hypot(dx, dy);
-            const scale = distance / touchDistance;
-            const newZoom = Math.min(8, Math.max(1, initialZoom * scale));
-            setZoom(newZoom);
-            setPosition(clampPosition(position, newZoom, true));
+            moveDragHandler(touch.clientX, touch.clientY);
         }
     };
 
-    const handleTouchEnd = (e: React.TouchEvent) => {
-        if (isDragging) {
-            setIsDragging(false);
-            setTransitionEnabled(true);
-            setPosition(clampPosition(position, zoom, false));
-            setTimeout(() => setIgnoreNextClick(false), 0);
-        }
-        if (e.touches.length === 0) {
-            // reset pinch data
-            setTouchDistance(0);
-        }
-    };
+    const handleTouchEnd = () => endDragHandler();
 
     // Reset on image change
     useEffect(() => {
@@ -167,7 +147,6 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
         setPosition({ x: 0, y: 0 });
         setTransitionEnabled(false);
         setIgnoreNextClick(false);
-        setTouchDistance(0);
     }, [imageUrl]);
 
     return (

@@ -244,7 +244,13 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                                     {/* Password entry field (only shows when room is selected) */}
                                     {selectedRoom?.id === room.id && (
                                         <div className="mt-4 flex flex-col gap-2">
-                                            <div className="flex flex gap-2">
+                                            <form
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    handleJoinRoom(room, passwordInput);
+                                                }}
+                                                className="flex flex gap-2"
+                                            >
                                                 <input
                                                     type="password"
                                                     placeholder="Enter password"
@@ -258,7 +264,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                                                 >
                                                     Join Room
                                                 </button>
-                                            </div>
+                                            </form>
                                             {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
                                         </div>
                                     )}
@@ -306,7 +312,13 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                 </div>
 
                 {/* Create Room Panel */}
-                <div className="p-4 bg-n700 rounded-xl flex flex-col gap-4">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleCreateRoom();
+                    }}
+                    className="p-4 bg-n700 rounded-xl flex flex-col gap-4"
+                >
                     <div className="flex flex-col gap-2">
                         <h2 className="text-2xl font-bold text-n100">Create a Room</h2>
                         <label className="block text-n300">Room Name</label>
@@ -340,7 +352,7 @@ const FindRoom = ({ supabase, user, setUser, onRoomSelect }: any) => {
                     >
                         {createRoomMessage}
                     </p>
-                </div>
+                </form>
             </div>
             <a
                 className="ml-auto md:absolute md:bottom-4 md:right-4"
